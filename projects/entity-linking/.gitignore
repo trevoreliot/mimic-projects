@@ -1,0 +1,75 @@
+# --- Python Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Local Environment & Secrets ---
+.env
+.env.local
+.envrc
+.direnv/
+
+# --- Clinical & Patient Data (Pandas/Data Science Formats) ---
+# Ignore the entire data directory as specified in the architecture layout
+data/
+
+# Extension-based rules to prevent accidental commits of data files anywhere in the repo
+*.csv
+*.csv.gz
+*.csv.zip
+*.tsv
+*.tsv.gz
+*.xlsx
+*.xls
+*.xlsm
+*.parquet
+*.pq
+*.pkl
+*.pickle
+*.feather
+*.h5
+*.hdf5
+*.jsonl
+*.ndjson
+
+# General JSON exclusion (allowing specific config files if needed)
+*.json
+!config/**/*.json
+!pyproject.toml
+!package.json
+
+# --- Databases & Dumps ---
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.sql.gz
+
+# --- Large Model Binaries & Archives ---
+*.pt
+*.pth
+*.bin
+*.onnx
+*.joblib
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+
+# --- OS-specific files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

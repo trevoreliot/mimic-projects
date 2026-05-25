@@ -36,3 +36,8 @@ only-include = ["src/mimic_utils"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mimic_utils"]
+
+[tool.uv.workspace]
+members = [
+    "projects/entity-linking",
+]
