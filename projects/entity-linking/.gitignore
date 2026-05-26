@@ -51,7 +51,7 @@ data/
 *.db
 *.sqlite
 *.sqlite3
-*.sql
+#*.sql
 *.sql.gz
 
 # --- Large Model Binaries & Archives ---
