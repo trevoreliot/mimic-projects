@@ -23,10 +23,13 @@ def get_device_type() -> str:
     """
     Detect the most powerful available hardware accelerator.
     Returns:
-        str: 'cuda' for NVIDIA GPUs, 'mps' for Apple Silicon, or 'cpu' as fallback.
+        str: 'cuda' for NVIDIA GPUs, 'rocm' for AMD GPUs, 'mps' for Apple Silicon, or 'cpu' as fallback.
     """
     if HAS_TORCH:
         if torch.cuda.is_available():
+            # Check if this is a ROCm/HIP build of PyTorch
+            if hasattr(torch, "version") and getattr(torch.version, "hip", None) is not None:
+                return "rocm"
             return "cuda"
         elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             return "mps"
@@ -39,8 +42,12 @@ def get_device_type() -> str:
         if system == "Darwin" and (machine == "arm64" or "arm" in platform.processor().lower()):
             return "mps"
         
-        # Check if NVIDIA GPU is present (heuristic via simple path/command check)
+        # Check if AMD/ROCm GPU is present (heuristic via simple path/command check)
         import shutil
+        if shutil.which("rocm-smi") is not None or shutil.which("rocminfo") is not None:
+            return "rocm"
+        
+        # Check if NVIDIA GPU is present (heuristic via simple path/command check)
         if shutil.which("nvidia-smi") is not None:
             return "cuda"
             
@@ -58,7 +65,9 @@ def get_torch_device():
         return None
         
     device_type = get_device_type()
-    return torch.device(device_type)
+    # PyTorch uses "cuda" for both NVIDIA CUDA and AMD ROCm/HIP device types
+    torch_device_type = "cuda" if device_type == "rocm" else device_type
+    return torch.device(torch_device_type)
 
 
 def configure_pipeline_hardware() -> bool:
@@ -73,16 +82,16 @@ def configure_pipeline_hardware() -> bool:
         
     device = get_device_type()
     
-    if device == "cuda":
+    if device in ("cuda", "rocm"):
         # spaCy requires CuPy or PyTorch for GPU acceleration.
         # prefer_gpu() will try to allocate GPU resources.
         try:
             gpu_activated = spacy.prefer_gpu()
             if gpu_activated:
-                logger.info("Successfully activated CUDA GPU for spaCy/medspaCy pipelines.")
+                logger.info(f"Successfully activated {device.upper()} GPU for spaCy/medspaCy pipelines.")
                 return True
             else:
-                logger.warning("CUDA detected but spaCy prefer_gpu() returned False. Falling back to CPU for spaCy.")
+                logger.warning(f"{device.upper()} detected but spaCy prefer_gpu() returned False. Falling back to CPU for spaCy.")
         except Exception as e:
             logger.error(f"Error configuring spaCy GPU: {e}. Falling back to CPU.")
     elif device == "mps":
@@ -115,9 +124,13 @@ def get_hardware_summary() -> dict:
     if HAS_TORCH:
         summary["torch_version"] = torch.__version__
         if device_type == "cuda":
-            summary["cuda_device_name"] = torch.cuda.get_device_name(0)
-            summary["cuda_device_count"] = torch.cuda.device_count()
-            summary["cuda_capability"] = torch.cuda.get_device_capability(0)
+            summary["cuda_device_name"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Unknown"
+            summary["cuda_device_count"] = torch.cuda.device_count() if torch.cuda.is_available() else 0
+            summary["cuda_capability"] = torch.cuda.get_device_capability(0) if torch.cuda.is_available() else "Unknown"
+        elif device_type == "rocm":
+            summary["rocm_version"] = getattr(torch.version, "hip", "Unknown")
+            summary["rocm_device_name"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "Unknown"
+            summary["rocm_device_count"] = torch.cuda.device_count() if torch.cuda.is_available() else 0
         elif device_type == "mps":
             summary["mps_built"] = torch.backends.mps.is_built()
             
@@ -146,6 +159,10 @@ def log_hardware_status() -> None:
     if info.get("cuda_device_name"):
         logger.info(f" GPU Model              : {info['cuda_device_name']}")
         logger.info(f" CUDA Capability        : {info['cuda_capability']}")
+    elif info.get("rocm_device_name"):
+        logger.info(f" GPU Model              : {info['rocm_device_name']}")
+        logger.info(f" ROCm Version           : {info['rocm_version']}")
+        logger.info(f" ROCm Device Count      : {info['rocm_device_count']}")
     elif info.get("mps_built"):
         logger.info(" MPS Acceleration       : Enabled (Apple Silicon)")
         
