@@ -73,3 +73,6 @@ data/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# --- Vendored SqlAlchemy credential builder ---
+db_config.py

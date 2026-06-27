@@ -3,4 +3,4 @@ select subject_id,
 	category,
 	description,
 	text as note_text
-from noteevents n
+from mimiciii.noteevents n

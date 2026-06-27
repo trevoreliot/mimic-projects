@@ -1,0 +1,75 @@
+#+TITLE: Clinical Entity Linking Pipeline - Implementation Roadmap
+#+AUTHOR: Antigravity & Trevor
+#+DESCRIPTION: A step-by-step roadmap to build, train, analyze, and visualize a clinical entity linking pipeline on MIMIC-III data.
+#+OPTIONS: toc:2 num:nil
+
+* Clinical Entity Linking Pipeline Roadmap
+
+** [ ] Phase 1: Environment & Project Setup
+*** TODO Configure Python Environment and Dependencies
+    Add necessary packages to [[file:pyproject.toml][pyproject.toml]] using =uv=.
+    Dependencies to add:
+    - =torch= (for neural model execution and CUDA/MPS checks)
+    - =transformers= (for Hugging Face models like SapBERT)
+    - =tqdm=, =scikit-learn= (for evaluation and logging)
+    - =matplotlib=, =seaborn= (for visualization)
+*** TODO Create Hardware & Pipeline Configuration Structure
+    - Create a =config/= directory.
+    - Add YAML/TOML profiles (e.g., =config/default.yaml=) to control model parameters, similarity thresholds, and execution configurations.
+*** TODO Setup Local Database Cache / Verification
+    - Verify PostgreSQL connection details for MIMIC-III database mirroring.
+    - Add database connection parameter validations to local environment configurations.
+
+** [ ] Phase 2: Core NLP & Entity Extraction Pipeline (spaCy / medspaCy)
+*** TODO Create =src/pipeline= Module Structure
+    Create directory =src/pipeline/= and initialize =__init__.py=.
+*** TODO Implement spaCy/medspaCy Pipeline Wrapper
+    - Load clinical models (e.g., scispacy or custom medspaCy pipelines).
+    - Configure pipelines for NER (Named Entity Recognition) and context detection (negation, history, section, etc.).
+    - Ensure dynamic backend config using =configure_pipeline_hardware()= from [[file:src/utils/hardware.py][hardware.py]].
+*** TODO Implement Ingestion to Pipeline Integration
+    - Feed dataframes loaded from ingestion loaders into the extraction pipeline.
+    - Output standardized entity mentions with locations, categories, and contextual attributes (e.g., negated vs. non-negated).
+
+** [ ] Phase 3: SapBERT Entity Linking Engine
+*** TODO Implement SapBERT Entity Linker Component
+    - Load pre-trained SapBERT weights (from Hugging Face =cambridgeltl/SapBERT-from-PubMedBERT-fulltext= or similar).
+    - Write a candidate generator and ranking model to match text mentions extracted in Phase 2 to standard clinical vocabularies (e.g., UMLS concepts/CUIs).
+*** TODO Hardware Accelerator Alignment
+    - Implement dynamic tensor allocation to =cuda= or =mps= using =get_torch_device()=.
+    - Optimize batch inference to prevent out-of-memory errors on large note datasets.
+
+** [ ] Phase 4: Training & Fine-Tuning Orchestrator
+*** TODO Create =src/training= Module Structure
+    Create directory =src/training/= and initialize =__init__.py=.
+*** TODO Implement Training/Fine-tuning Script
+    - Create an orchestrator to fine-tune the Entity Linker (or NER model) if domain-specific calibration is needed.
+    - Support hardware-agnostic training loop (automatically switching optimizer and tensor devices).
+    - Ensure proper checkpointing and metrics logging.
+
+** [ ] Phase 5: Downstream Feature Extraction & Analysis
+*** TODO Create =src/analysis= Module Structure
+    Create directory =src/analysis/= and initialize =__init__.py=.
+*** TODO Extract Linked Entity Features
+    - Construct patient-level or admission-level feature vectors based on linked concepts/CUIs.
+*** TODO Perform Statistical Analysis and Modeling
+    - Join clinical entities with demographic and outcome variables loaded via [[file:src/sql/mimiciii_admits.sql][mimiciii_admits.sql]].
+    - Build models or run correlations mapping patient conditions to outcomes (e.g., mortality, length of stay).
+
+** [ ] Phase 6: Visualization & UI Reporting
+*** TODO Create =src/viz= Module Structure
+    Create directory =src/viz/= and initialize =__init__.py=.
+*** TODO Build Results Dashboards / Plots
+    - Generate plots displaying distributions of clinical concepts and correlation matrices.
+    - Build interactive reporting features showing linked text annotations and confidence metrics.
+
+** [ ] Phase 7: System Integration & CLI Expansion
+*** TODO Expand Command Line Interface in [[file:main.py][main.py]]
+    Add flags to run specific parts of the pipeline:
+    - =--pipeline=: Run only extraction & linking.
+    - =--train=: Trigger training/fine-tuning.
+    - =--analyze=: Run feature engineering & statistical analysis.
+    - =--viz=: Run visualization dashboard.
+*** TODO Write Detailed Integration Tests and Build Verification
+    - Create automated tests for hardware-agnostic behavior and loaders.
+    - Document configuration steps and usage in [[file:README.md][README.md]].

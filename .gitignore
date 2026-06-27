@@ -1,63 +1,78 @@
-# Byte-compiled / optimized / DLL files
+# --- Python Environment ---
 __pycache__/
 *.py[cod]
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
+*$py.class
+.venv/
+venv/
+ENV/
 env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.ipynb
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# --- Local Environment & Secrets ---
+.env
+.env.local
+.envrc
+.direnv/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# --- Clinical & Patient Data (Pandas/Data Science Formats) ---
+# Ignore the entire data directory as specified in the architecture layout
+data/
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
+# Extension-based rules to prevent accidental commits of data files anywhere in the repo
+*.csv
+*.csv.gz
+*.csv.zip
+*.tsv
+*.tsv.gz
+*.xlsx
+*.xls
+*.xlsm
+*.parquet
+*.pq
+*.pkl
+*.pickle
+*.feather
+*.h5
+*.hdf5
+*.jsonl
+*.ndjson
 
-# Translations
-*.mo
-*.pot
+# General JSON exclusion (allowing specific config files if needed)
+*.json
+!config/**/*.json
+!pyproject.toml
+!package.json
 
-# Django stuff:
-*.log
+# --- Databases & Dumps ---
+*.db
+*.sqlite
+*.sqlite3
+#*.sql
+*.sql.gz
 
-# Sphinx documentation
-docs/_build/
+# --- Large Model Binaries & Archives ---
+*.pt
+*.pth
+*.bin
+*.onnx
+*.joblib
+*.zip
+*.tar.gz
+*.tgz
+*.rar
 
-# PyBuilder
-target/
-
-# OSX .DS_Store
+# --- OS-specific files ---
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# PyCharm / JetBrains
-.idea
+# --- Vendored SqlAlchemy credential builder ---
+db_config.py
